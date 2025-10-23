@@ -85,5 +85,6 @@ def generate_docs():
         download_name=f"Generated_Feedback_{timestamp}.zip"
     )
 
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))  # Render provides PORT automatically
+    app.run(host='0.0.0.0', port=port)
