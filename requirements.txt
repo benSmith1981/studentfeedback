@@ -2,3 +2,5 @@ flask
 docxtpl
 jinja2
 python-docx
+pandas 
+openpyxl
