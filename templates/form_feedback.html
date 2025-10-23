@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Feedback Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, button { width: 100%; padding: 10px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Feedback/Assessment Record Generator</h2>
+  <p>Upload a CSV or Excel file containing student names and feedback data.</p>
+  <p><strong>Required columns:</strong> Name, assignmentTitle, assessorName, unitNumber, dueDate, HandInDate, overallComment, programmeTitle</p>
+  <p><a href="/download-template" target="_blank">⬇️ Download Excel Feedback Template</a></p>
+
+  <form method="POST" enctype="multipart/form-data">
+    <label>Select your CSV or Excel file</label>
+    <input type="file" name="file" accept=".csv,.xlsx" required>
+    <button type="submit">Generate ZIP of Feedback Docs</button>
+  </form>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Assignment Brief Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
+    button { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h2>Assignment Brief Generator</h2>
+  <p>Fill in the details below to produce an assignment brief document.</p>
+  <form method="POST">
+    <label>Programme Title</label>
+    <input name="programmeTitle" required>
+
+    <label>Unit Number</label>
+    <input name="unitNumber" required>
+
+    <label>Assignment Title</label>
+    <input name="assignmentTitle" required>
+
+    <label>Assessor Name</label>
+    <input name="assessorName" required>
+
+    <label>Hand Out Date</label>
+    <input type="date" name="handOutDate">
+
+    <label>Due Date</label>
+    <input type="date" name="dueDate">
+
+    <label>Learning Aims</label>
+    <textarea name="learningAims" rows="3"></textarea>
+
+    <label>Scenario</label>
+    <textarea name="scenario" rows="4"></textarea>
+
+    <label>Tasks</label>
+    <textarea name="tasks" rows="4"></textarea>
+
+    <label>Sources / Information</label>
+    <textarea name="sources" rows="3"></textarea>
+
+    <button type="submit">Generate Word Document</button>
+  </form>
+</body>
+</html>
