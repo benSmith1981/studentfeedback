@@ -2,5 +2,7 @@ flask
 docxtpl
 jinja2
 python-docx
-pandas 
+pandas
 openpyxl
+openai
+python-dotenv

@@ -1,0 +1,170 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Assignment Brief Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    input, textarea, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 14px;
+    }
+    button { margin-top: 25px; font-size: 16px; }
+    hr { margin: 30px 0; }
+  </style>
+</head>
+
+<body>
+
+<h2>Assignment Brief Generator</h2>
+
+<p>
+Fill in the details below.  
+All details are saved locally in your browser and can be reloaded later.
+</p>
+
+<!-- ================= LOAD SAVED ASSIGNMENT ================= -->
+<label>Load saved assignment</label>
+<select id="savedAssignments">
+  <option value="">-- Select an assignment --</option>
+</select>
+
+<hr>
+
+<form method="POST">
+
+  <!-- ================= ASSIGNMENT DETAILS ================= -->
+  <label>Programme Title</label>
+  <input id="programmeTitle" name="programmeTitle" required>
+
+  <label>Unit Number</label>
+  <input id="unitNumber" name="unitNumber" required>
+
+  <label>Assignment Title</label>
+  <input id="assignmentTitle" name="assignmentTitle" required>
+
+  <label>Assessor Name</label>
+  <input id="assessorName" name="assessorName" required>
+
+  <label>Hand Out Date</label>
+  <input type="date" id="handOutDate" name="handOutDate">
+
+  <label>Due Date</label>
+  <input type="date" id="dueDate" name="dueDate">
+
+  <label>Learning Aims</label>
+  <textarea id="learningAims" name="learningAims" rows="3"></textarea>
+
+  <label>Scenario</label>
+  <textarea id="scenario" name="scenario" rows="4"></textarea>
+
+  <label>Tasks</label>
+  <textarea id="tasks" name="tasks" rows="4"></textarea>
+
+  <label>Sources / Information</label>
+  <textarea id="sources" name="sources" rows="3"></textarea>
+
+  <hr>
+
+  <!-- ================= STUDENT NAME CLEANER ================= -->
+  <h3>Student List (optional)</h3>
+
+  <p>
+  Paste anything here — Excel tables, copied emails, messy lists.  
+  This will be sent to AI later to extract clean student names.
+  </p>
+
+  <label>Raw student list (messy input allowed)</label>
+  <textarea id="rawStudents" name="rawStudents" rows="6"
+    placeholder="Paste copied tables or lists here..."></textarea>
+
+  <button type="submit">Generate Word Document</button>
+
+</form>
+
+<hr>
+
+<p>
+<strong>Note:</strong>  
+Your data is stored only in this browser using local storage.  
+Nothing is uploaded or shared until you submit the form.
+</p>
+
+<!-- ================= LOCAL STORAGE SCRIPT ================= -->
+<script>
+const fields = [
+  "programmeTitle",
+  "unitNumber",
+  "assignmentTitle",
+  "assessorName",
+  "handOutDate",
+  "dueDate",
+  "learningAims",
+  "scenario",
+  "tasks",
+  "sources",
+  "rawStudents"
+];
+
+function getAssignments() {
+  return JSON.parse(localStorage.getItem("assignments") || "{}");
+}
+
+function saveAssignment() {
+  const title = document.getElementById("assignmentTitle").value.trim();
+  if (!title) return;
+
+  const data = {};
+  fields.forEach(f => {
+    const el = document.getElementById(f);
+    if (el) data[f] = el.value;
+  });
+
+  const assignments = getAssignments();
+  assignments[title] = data;
+
+  localStorage.setItem("assignments", JSON.stringify(assignments));
+  loadDropdown();
+}
+
+function loadAssignment(title) {
+  const assignments = getAssignments();
+  const data = assignments[title];
+  if (!data) return;
+
+  fields.forEach(f => {
+    const el = document.getElementById(f);
+    if (el && data[f] !== undefined) {
+      el.value = data[f];
+    }
+  });
+}
+
+function loadDropdown() {
+  const select = document.getElementById("savedAssignments");
+  select.innerHTML = `<option value="">-- Select an assignment --</option>`;
+
+  Object.keys(getAssignments()).forEach(title => {
+    const opt = document.createElement("option");
+    opt.value = title;
+    opt.textContent = title;
+    select.appendChild(opt);
+  });
+}
+
+document.getElementById("savedAssignments").addEventListener("change", e => {
+  loadAssignment(e.target.value);
+});
+
+document.querySelector("form").addEventListener("submit", saveAssignment);
+
+// Load on page open
+loadDropdown();
+</script>
+
+</body>
+</html>
