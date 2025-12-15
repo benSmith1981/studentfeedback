@@ -1,0 +1,69 @@
+# ===============================
+# Python
+# ===============================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# ===============================
+# Environment variables
+# ===============================
+.env
+
+# ===============================
+# Flask
+# ===============================
+instance/
+.webassets-cache/
+
+# ===============================
+# Logs & runtime files
+# ===============================
+*.log
+
+# ===============================
+# OS / Editor junk
+# ===============================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# ===============================
+# Generated files
+# ===============================
+*.zip
+*.docx
+
+# If you want to keep templates, unignore them:
+!templates/**/*.docx
+
+# ===============================
+# Pandas / Excel temp files
+# ===============================
+~$*.xlsx
+*.xlsm
+
+# ===============================
+# Local storage / temp output
+# ===============================
+static/ai_feedback.zip
+static/*.tmp
+
+# ===============================
+# Test / scratch files
+# ===============================
+scratch/
+tmp/

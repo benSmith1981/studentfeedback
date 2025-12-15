@@ -267,7 +267,7 @@ Return ONLY valid JSON.
       "targetedCriteria": "Full criterion wording",
       "criteriaAchieved": "Yes or No",
       "assessmentComment": "Explain clearly to the learner, address them as you or something direct to them, why this criterion was or was not achieved.
-If not achieved, state what is missing and what must be done to meet it."
+If not achieved, state what is missing and what must be done to meet it but only based on given criteria or extra input from the teacher."
     }}
   ],
   "overallComment": "A full professional paragraph summarising, addressed to the learner as you or something direct to them, overall performance,
