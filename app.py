@@ -277,6 +277,7 @@ State the grade PASS, MERIT or DISTINCTION as first thing to be clear to them."
 
 RULES:
 - Use professional BTEC assessor tone
+- Stick to facts provided in grading criteria and by the assessor who gave a grade and maybe a comment don't make stuff up
 - Use ONLY Yes or No
 - Do not mention AI
 """
