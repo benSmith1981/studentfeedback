@@ -269,11 +269,11 @@ Return ONLY valid JSON.
       "targetedCriteria": "Full criterion wording",
       "criteriaAchieved": "Yes or No",
       "assessmentComment": "Explain clearly to the learner, address them as you or something direct to them, why this criterion was or was not achieved.
-If not achieved, state what is missing and what must be done to meet it but only based on given criteria or extra input from the teacher."
+If not achieved, state what is missing and what must be done to meet it but only based on given criteria or extra input given."
     }}
   ],
   "overallComment": "A full professional paragraph summarising, addressed to the learner as you or something direct to them, overall performance,
-strengths, unmet criteria, and clear next steps, unless they achieved all the criteria and got a distinction. Don't go overboard or state anything that you don't know from evidence in comment from teacher or from the criteria. 
+strengths, unmet criteria, and clear next steps, unless they achieved all the criteria and got a distinction. Don't go overboard or state anything that you don't know from evidence or from the criteria. 
 State the grade PASS, MERIT or DISTINCTION as first thing to be clear to them."
 }}
 
@@ -362,11 +362,14 @@ RULES:
                 doc.save(temp)
                 temp.seek(0)
 
+                # Make filenames safe
+                safe_unitNumber = context_base["unitNumber"].strip().replace(" ", "_")
+                safe_student = student.strip().replace(" ", "_")
+
                 zipf.writestr(
-                    f"{student.replace(' ', '_')}_Assessment_Record_AI.docx",
+                    f"{safe_unitNumber}_{safe_student}_Assessment_Record.docx",
                     temp.read()
                 )
-
         zip_buffer.seek(0)
         print("✅ ZIP ready")
 
