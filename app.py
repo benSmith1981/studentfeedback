@@ -267,11 +267,11 @@ Return ONLY valid JSON.
       "targetedCriteria": "Full criterion wording",
       "criteriaAchieved": "Yes or No",
       "assessmentComment": "Explain clearly to the learner, address them as you or something direct to them, why this criterion was or was not achieved.
-If not achieved, state what is missing and what must be done to meet it but only based on given criteria or extra input from the teacher."
+If not achieved, state what is missing and what must be done to meet it but only based on given criteria or extra input."
     }}
   ],
   "overallComment": "A full professional paragraph summarising, addressed to the learner as you or something direct to them, overall performance,
-strengths, unmet criteria, and clear next steps, unless they achieved all the criteria and got a distinction. Don't go overboard or state anything that you don't know from evidence in comment from teacher or from the criteria. 
+strengths, unmet criteria, and clear next steps, unless they achieved all the criteria and got a distinction. Don't go overboard or state anything that you don't know from evidence in comment or from the criteria. 
 State the grade PASS, MERIT or DISTINCTION as first thing to be clear to them."
 }}
 
@@ -280,7 +280,7 @@ RULES:
 - Stick to facts provided in grading criteria and by the assessor who gave a grade and maybe a comment don't make stuff up
 - Use ONLY Yes or No
 - Do not mention AI
-- Don't say your Teacher said
+- Don't say "your Teacher said"
 - The feedback must be addressed directly to the learner, never in third person or from someone else must sound like written by the person who is writing this
 """
 
