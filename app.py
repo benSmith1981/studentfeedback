@@ -280,6 +280,8 @@ RULES:
 - Stick to facts provided in grading criteria and by the assessor who gave a grade and maybe a comment don't make stuff up
 - Use ONLY Yes or No
 - Do not mention AI
+- Don't say your Teacher said
+- The feedback must be addressed directly to the learner, never in third person or from someone else must sound like written by the person who is writing this
 """
 
                 try:
