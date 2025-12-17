@@ -210,10 +210,7 @@ def feedback_ai():
             return "❌ Invalid student data submitted.", 400
 
         if not students:
-            return "❌ No students submitted.", 400
-
-        if len(students) > 20:
-            return "❌ Too many students at once (maximum 20).", 400
+            return "❌ No students submitted. You need to enter student names press extract first", 400
 
         criteria_text = request.form.get("criteria", "")
         teacher_notes = request.form.get("teacher_notes", "")
@@ -390,6 +387,6 @@ RULES:
 # ===============================
 if __name__ == "__main__":
     #test only
-    # app.run(debug=True)
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)
+    # port = int(os.environ.get('PORT', 5000))
+    # app.run(host='0.0.0.0', port=port)
