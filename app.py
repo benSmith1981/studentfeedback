@@ -197,6 +197,7 @@ Text to extract from:
         print("❌ Name extraction failed:", e)
         return []
     
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 @app.route("/feedback-ai", methods=["GET", "POST"])
 def feedback_ai():
@@ -217,7 +218,7 @@ def feedback_ai():
         criteria_text = request.form.get("criteria", "")
         teacher_notes = request.form.get("teacher_notes", "")
 
-        print(f"🔍 Starting AI feedback generation for {len(students)} students")
+        print(f"🔍 Generating AI feedback for {len(students)} students (PARALLEL)")
 
         # ---------- SHARED CONTEXT ----------
         context_base = {
@@ -234,17 +235,18 @@ def feedback_ai():
             "lead_iv_signed_date": request.form.get("lead_iv_signed_date"),
         }
 
+        # ✅ ZIP BUFFER CREATED ONCE (IMPORTANT)
         zip_buffer = io.BytesIO()
 
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
-            for s in students:
-                student = s["name"]
-                grade_hint = s.get("grade", "")
-                teacher_note = s.get("note", "")
+        # ---------- AI WORKER ----------
+        def generate_for_student(s):
+            student = s["name"]
+            grade_hint = s.get("grade", "")
+            teacher_note = s.get("note", "")
 
-                print(f"🧠 Generating AI assessment for {student}")
+            print(f"🧠 AI generating for {student}")
 
-                prompt = f"""
+            prompt = f"""
 You are a UK BTEC assessor completing an official Assessment Record.
 
 Student: {student}
@@ -283,32 +285,70 @@ RULES:
 - Don't say "your Teacher said"
 - The feedback must be addressed directly to the learner, never in third person or from someone else must sound like written by the person who is writing this
 """
+            response = client.chat.completions.create(
+                model="gpt-5-mini",
+                messages=[{"role": "user", "content": prompt}],
+                timeout=45
+            )
 
-                try:
-                    response = client.chat.completions.create(
-                        model="gpt-5-mini",
-                        messages=[{"role": "user", "content": prompt}],
-                        timeout=30
-                    )
-                    data = json.loads(response.choices[0].message.content.strip())
+            data = json.loads(response.choices[0].message.content.strip())
 
-                except Exception as e:
-                    print(f"❌ AI failed for {student}: {e}")
-                    continue
+            # ---------- RESUBMISSION LOGIC ----------
+            needs_resub = any(
+                c.get("criteriaAchieved", "").lower() == "no"
+                for c in data.get("criterias", [])
+            )
 
-                # ---------- NORMALISE CRITERIA ----------
+            if needs_resub:
+                data["overallComment"] += (
+                    "\n\nBecause not all assessment criteria have been achieved, "
+                    "you are required to complete a resubmission. You should address "
+                    "the specific criteria identified above and resubmit improved evidence."
+                )
+
+            return student, data
+
+        # ---------- PARALLEL EXECUTION ----------
+        results = []
+
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [
+                executor.submit(generate_for_student, s)
+                for s in students
+            ]
+
+            for f in as_completed(futures):
+                results.append(f.result())
+
+        # ---------- BUILD ZIP ----------
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+            for student, data in results:
+                print(f"📄 Rendering document for {student}")
+
+                parts = student.lower().replace(",", "").split()
+                student_email = f"{parts[0]}.{parts[-1]}@student.cityofbristol.ac.uk"
+
                 criterias = []
+
                 for c in data.get("criterias", []):
+                    assessment_comment = c.get("assessmentComment", "").strip()
+
+                    # HARD FAILSAFE – Word will not render empty fields
+                    if not assessment_comment:
+                        assessment_comment = (
+                            "You have not yet provided sufficient evidence to fully meet this criterion. "
+                            "You should review the assessment requirements and submit improved evidence "
+                            "that clearly addresses all aspects of the criterion."
+                        )
+
                     criterias.append({
                         "title": c.get("title", ""),
                         "targetedCriteria": c.get("targetedCriteria", ""),
-                        "criteriaAchieved": "Yes" if c.get("criteriaAchieved") == "Yes" else "No",
-                        "assessmentComment": c.get("assessmentComment", ""),
+                        "criteriaAchieved": (
+                            "Yes" if c.get("criteriaAchieved", "").lower() == "yes" else "No"
+                        ),
+                        "assessmentComment": assessment_comment
                     })
-
-                # ---------- AUTO STUDENT EMAIL ----------
-                parts = student.lower().replace(",", "").split()
-                student_email = f"{parts[0]}.{parts[-1]}@student.cityofbristol.ac.uk"
 
                 context = {
                     **context_base,
@@ -319,21 +359,21 @@ RULES:
                 }
 
                 doc = DocxTemplate(ASSESSMENT_TEMPLATE)
-                doc.render(context)
-
                 temp = io.BytesIO()
+                doc.render(context)
                 doc.save(temp)
                 temp.seek(0)
 
+                # Make filenames safe
+                safe_unitNumber = context_base["unitNumber"].strip().replace(" ", "_")
+                safe_student = student.strip().replace(" ", "_")
+
                 zipf.writestr(
-                    f"{student.replace(' ', '_')}_Assessment_Record_AI.docx",
+                    f"{safe_unitNumber}_{safe_student}_Assessment_Record.docx",
                     temp.read()
                 )
-
-                print(f"📄 Document generated for {student}")
-
         zip_buffer.seek(0)
-        print("✅ All AI assessment records generated")
+        print("✅ ZIP ready")
 
         return send_file(
             zip_buffer,
@@ -342,6 +382,7 @@ RULES:
         )
 
     return render_template("form_feedback_ai.html")
+
 
 
 # ===============================

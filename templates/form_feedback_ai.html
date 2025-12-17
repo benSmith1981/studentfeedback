@@ -279,34 +279,62 @@ function loadSaved(title) {
   studentsBox.style.display = d.students?.length ? "block" : "none";
 }
 
-/* ================= STUDENTS ================= */
 async function extractStudents() {
-  const res = await fetch("/extract-students", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ text: studentsRaw.value })
-  });
+  const raw = studentsRaw.value.trim();
+  if (!raw) {
+    alert("Paste some student names first.");
+    return;
+  }
 
-  const names = await res.json();
-  studentsTable.innerHTML = "";
+  // SHOW LOADING OVERLAY
+  loadingOverlay.style.display = "block";
+  loadingTitle.innerText = "Extracting student names…";
+  loadingDetail.innerText = "Analysing pasted text";
 
-  names.forEach(n => {
-    studentsTable.innerHTML += `
-      <tr>
-        <td>${n}</td>
-        <td>
-          <select>
-            <option>Pass</option>
-            <option>Merit</option>
-            <option>Distinction</option>
-          </select>
-        </td>
-        <td><textarea rows="2"></textarea></td>
-      </tr>`;
-  });
+  try {
+    const res = await fetch("/extract-students", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: raw })
+    });
 
-  studentsBox.style.display = names.length ? "block" : "none";
+    const names = await res.json();
+
+    studentsTable.innerHTML = "";
+
+    names.forEach(name => {
+      studentsTable.innerHTML += `
+        <tr>
+          <td>${name}</td>
+          <td>
+            <select>
+              <option>Pass</option>
+              <option>Merit</option>
+              <option>Distinction</option>
+            </select>
+          </td>
+          <td>
+            <textarea rows="2" placeholder="Optional personalised note"></textarea>
+          </td>
+        </tr>`;
+    });
+
+    studentsBox.style.display = names.length ? "block" : "none";
+
+    loadingTitle.innerText = "Extraction complete";
+    loadingDetail.innerText = `${names.length} students found`;
+
+  } catch (err) {
+    alert("Failed to extract students.");
+    console.error(err);
+  } finally {
+    // HIDE LOADING OVERLAY
+    setTimeout(() => {
+      loadingOverlay.style.display = "none";
+    }, 400);
+  }
 }
+
 
 
 /* ================= LOADING ================= */
