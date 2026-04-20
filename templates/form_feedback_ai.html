@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AI Feedback Generator</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      max-width: 1000px;
+      margin: 40px auto;
+    }
+
+    textarea, input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 20px;
+      display: block;
+    }
+
+    hr { margin: 30px 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      vertical-align: top;
+    }
+
+    th { background: #f5f5f5; }
+
+    .btnRow {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    /* ===== LOADING OVERLAY ===== */
+    #loadingOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.95);
+      z-index: 9999;
+      text-align: center;
+      padding-top: 200px;
+    }
+
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 6px solid #ccc;
+      border-top: 6px solid #333;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .statusTitle {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .statusDetail {
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+<h2>AI-Assisted BTEC Feedback Generator</h2>
+
+<p>
+Draft feedback generator using AI.<br>
+
+1. Enter student names press button extract first<br>
+2. THEN fill in rest of details and press Generate AI Feedback ZIP<br>
+Final responsibility remains with the assessor.
+</p>
+
+<!-- ===== LOADING OVERLAY ===== -->
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="statusTitle" id="loadingTitle">
+    Starting AI feedback generation…
+  </div>
+  <div class="statusDetail" id="loadingDetail">
+    Preparing student data
+  </div>
+</div>
+
+<!-- ===== SAVED ASSIGNMENTS ===== -->
+<label>Load saved assignment</label>
+<select id="savedAssignments">
+  <option value="">-- Select --</option>
+</select>
+
+<hr>
+
+<form id="aiForm" method="POST" action="/feedback-ai">
+
+<label>Student names (paste anything)</label>
+<textarea id="studentsRaw"></textarea>
+
+<div class="btnRow">
+  <button type="button" onclick="extractStudents()">Extract students</button>
+</div>
+
+<div id="studentsBox" style="display:none;">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Grade</th>
+        <th>Brief note</th>
+      </tr>
+    </thead>
+    <tbody id="studentsTable"></tbody>
+  </table>
+</div>
+
+<input type="hidden" id="students_json" name="students_json">
+
+<hr>
+
+<label>Programme title</label>
+<input id="programmeTitle" name="programmeTitle" required>
+
+<label>Assignment title</label>
+<input id="assignmentTitle" name="assignmentTitle" required>
+
+<label>Unit number</label>
+<input id="unitNumber" name="unitNumber" required>
+
+<label>Assessor name</label>
+<input id="assessorName" name="assessorName" required>
+
+<label>Assessor email</label>
+<input id="assessorEmail" name="assessorEmail" required>
+
+<label>Due date</label>
+<input type="date" id="due_date" name="due_date" required>
+
+<label>Hand-in date</label>
+<input type="date" id="handInDate" name="handInDate" required>
+
+<label>Date marked</label>
+<input type="date" id="marked_date" name="marked_date" required>
+
+<label>Feedback release date</label>
+<input type="date" id="feedback_date" name="feedback_date" required>
+
+<label>IV signature</label>
+<input id="signature_iv" name="signature_iv">
+
+<label>IV signed date</label>
+<input type="date" id="lead_iv_signed_date" name="lead_iv_signed_date">
+
+<label>Assignment criteria</label>
+<textarea id="criteria" name="criteria" rows="8" required></textarea>
+
+<label>Teacher notes</label>
+<textarea id="teacher_notes" name="teacher_notes"></textarea>
+
+<button type="submit">Generate AI Feedback ZIP</button>
+
+</form>
+
+<script>
+/* ================= STORAGE ================= */
+const STORAGE_KEY = "ai_feedback_assignments_v2";
+
+function getSaved() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+}
+
+function saveAll(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+/* ================= DROPDOWN ================= */
+function loadDropdown() {
+  const sel = document.getElementById("savedAssignments");
+  sel.innerHTML = `<option value="">-- Select --</option>`;
+  Object.keys(getSaved()).forEach(k => {
+    const o = document.createElement("option");
+    o.value = k;
+    o.textContent = k;
+    sel.appendChild(o);
+  });
+}
+
+/* ================= SAVE FORM ================= */
+function saveCurrent() {
+  const key = assignmentTitle.value.trim();
+  if (!key) return;
+
+  const students = [];
+  document.querySelectorAll("#studentsTable tr").forEach(r => {
+    students.push({
+      name: r.children[0].innerText,
+      grade: r.children[1].querySelector("select").value,
+      note: r.children[2].querySelector("textarea").value
+    });
+  });
+
+  const saved = getSaved();
+  saved[key] = {
+    studentsRaw: studentsRaw.value,
+    students,
+    programmeTitle: programmeTitle.value,
+    assignmentTitle: assignmentTitle.value,
+    unitNumber: unitNumber.value,
+    assessorName: assessorName.value,
+    assessorEmail: assessorEmail.value,
+    due_date: due_date.value,
+    handInDate: handInDate.value,
+    marked_date: marked_date.value,
+    feedback_date: feedback_date.value,
+    signature_iv: signature_iv.value,
+    lead_iv_signed_date: lead_iv_signed_date.value,
+    criteria: criteria.value,
+    teacher_notes: teacher_notes.value
+  };
+
+  saveAll(saved);
+  loadDropdown();
+}
+
+/* ================= LOAD FORM ================= */
+function loadSaved(title) {
+  const d = getSaved()[title];
+  if (!d) return;
+
+  studentsRaw.value = d.studentsRaw || "";
+  programmeTitle.value = d.programmeTitle || "";
+  assignmentTitle.value = d.assignmentTitle || "";
+  unitNumber.value = d.unitNumber || "";
+  assessorName.value = d.assessorName || "";
+  assessorEmail.value = d.assessorEmail || "";
+  due_date.value = d.due_date || "";
+  handInDate.value = d.handInDate || "";
+  marked_date.value = d.marked_date || "";
+  feedback_date.value = d.feedback_date || "";
+  signature_iv.value = d.signature_iv || "";
+  lead_iv_signed_date.value = d.lead_iv_signed_date || "";
+  criteria.value = d.criteria || "";
+  teacher_notes.value = d.teacher_notes || "";
+
+  studentsTable.innerHTML = "";
+  (d.students || []).forEach(s => {
+    studentsTable.innerHTML += `
+      <tr>
+        <td>${s.name}</td>
+        <td>
+          <select>
+            <option ${s.grade==="Pass"?"selected":""}>Pass</option>
+            <option ${s.grade==="Merit"?"selected":""}>Merit</option>
+            <option ${s.grade==="Distinction"?"selected":""}>Distinction</option>
+          </select>
+        </td>
+        <td><textarea rows="2">${s.note||""}</textarea></td>
+      </tr>`;
+  });
+
+  studentsBox.style.display = d.students?.length ? "block" : "none";
+}
+
+async function extractStudents() {
+  const raw = studentsRaw.value.trim();
+  if (!raw) {
+    alert("Paste some student names first.");
+    return;
+  }
+
+  // SHOW LOADING OVERLAY
+  loadingOverlay.style.display = "block";
+  loadingTitle.innerText = "Extracting student names…";
+  loadingDetail.innerText = "Analysing pasted text";
+
+  try {
+    const res = await fetch("/extract-students", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: raw })
+    });
+
+    const names = await res.json();
+
+    studentsTable.innerHTML = "";
+
+    names.forEach(name => {
+      studentsTable.innerHTML += `
+        <tr>
+          <td>${name}</td>
+          <td>
+            <select>
+              <option>Pass</option>
+              <option>Merit</option>
+              <option>Distinction</option>
+            </select>
+          </td>
+          <td>
+            <textarea rows="2" placeholder="Optional personalised note"></textarea>
+          </td>
+        </tr>`;
+    });
+
+    studentsBox.style.display = names.length ? "block" : "none";
+
+    loadingTitle.innerText = "Extraction complete";
+    loadingDetail.innerText = `${names.length} students found`;
+
+  } catch (err) {
+    alert("Failed to extract students.");
+    console.error(err);
+  } finally {
+    // HIDE LOADING OVERLAY
+    setTimeout(() => {
+      loadingOverlay.style.display = "none";
+    }, 400);
+  }
+}
+
+
+
+/* ================= LOADING ================= */
+function startProgress(students) {
+  let i = 0;
+  const t = setInterval(() => {
+    if (i < students.length) {
+      loadingTitle.innerText = "Generating AI feedback";
+      loadingDetail.innerText = `Generating feedback for ${students[i].name}…`;
+      i++;
+    } else {
+      loadingTitle.innerText = "Finalising documents";
+      loadingDetail.innerText = "Packaging ZIP…";
+      clearInterval(t);
+    }
+  }, 1200);
+}
+// Hide loading overlay when browser regains focus (after download)
+window.addEventListener("focus", () => {
+  const overlay = document.getElementById("loadingOverlay");
+  if (overlay) overlay.style.display = "none";
+});
+/* ================= SUBMIT ================= */
+aiForm.addEventListener("submit", () => {
+  const students = [];
+  document.querySelectorAll("#studentsTable tr").forEach(r => {
+    students.push({
+      name: r.children[0].innerText,
+      grade: r.children[1].querySelector("select").value,
+      note: r.children[2].querySelector("textarea").value
+    });
+  });
+
+  students_json.value = JSON.stringify(students);
+  saveCurrent();
+  loadingOverlay.style.display = "block";
+  startProgress(students);
+});
+
+/* ================= INIT ================= */
+savedAssignments.addEventListener("change", e => loadSaved(e.target.value));
+loadDropdown();
+</script>
+
+</body>
+</html>
