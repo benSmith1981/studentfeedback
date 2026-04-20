@@ -22,11 +22,15 @@ load_dotenv(dotenv_path=env_path)
 
 print("OPENAI_API_KEY loaded:", bool(os.getenv("OPENAI_API_KEY")))
 
+
 # ===============================
 # APP
 # ===============================
 app = Flask(__name__)
 client = OpenAI()  # GPT-5 mini
+
+ASSESSMENT_TEMPLATE = "BTEC-Assessment-Record-TemplateJinja.docx"
+ASSIGNMENT_TEMPLATE = "BTEC-Assignment-Brief-Template_jinja.docx"
 
 def format_value(value):
     if pd.isna(value):
