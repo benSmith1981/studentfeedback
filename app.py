@@ -2,8 +2,17 @@ from flask import Flask, request, render_template, send_file
 from docxtpl import DocxTemplate
 import pandas as pd
 import io, zipfile, os
+from datetime import datetime
 
 app = Flask(__name__)
+
+
+def format_value(value):
+    if pd.isna(value):
+        return ""
+    if isinstance(value, (pd.Timestamp, datetime)):
+        return value.strftime("%d/%m/%Y")
+    return str(value)
 
 @app.route('/download-template')
 def download_template():
@@ -20,8 +29,8 @@ def download_template():
             "assessorName": "Your Name",
             "unitNumber": "1",
             "programmeTitle": "BTEC National in Computing",
-            "dueDate": "2025-10-23",
-            "handInDate": "2025-10-22",
+            "dueDate": "23/10/2025",
+            "handInDate": "22/10/2025",
             "overallComment": "Write feedback here..."
         }
     ]
@@ -79,9 +88,9 @@ def feedback():
         # Determine file type
         filename = file.filename.lower()
         if filename.endswith(".xlsx"):
-            df = pd.read_excel(file)
+            df = pd.read_excel(file, parse_dates=["dueDate", "handInDate"])
         elif filename.endswith(".csv"):
-            df = pd.read_csv(file)
+            df = pd.read_csv(file, parse_dates=["dueDate", "handInDate"], dayfirst=True)
         else:
             return "❌ Please upload a .csv or .xlsx file.", 400
 
@@ -97,8 +106,7 @@ def feedback():
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as zipf:
             for index, row in df.iterrows():
-                context = {k.strip(): ("" if pd.isna(v) else str(v)) for k, v in row.items()}
-
+                context = {k.strip(): format_value(v) for k, v in row.items()}
                 # Skip if Name is missing
                 if not context.get("Name"):
                     print(f"Skipping blank Name at row {index}")
